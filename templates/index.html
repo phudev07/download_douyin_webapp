@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Douyin Super Tool v5.0</title>
+    <meta name="referrer" content="no-referrer">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="app-container">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="logo-icon"><i class="ri-movie-2-line"></i></div>
+            <div class="logo-text">
+                <h1>DouyinTool</h1>
+                <span>v5.0 Premium</span>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <button class="nav-btn active" onclick="switchTab('batch')">
+                <i class="ri-file-list-3-line"></i> <span>Tải Hàng Loạt</span>
+            </button>
+            <button class="nav-btn" onclick="switchTab('channel')">
+                <i class="ri-user-star-line"></i> <span>Tải Kênh User</span>
+            </button>
+            <button class="nav-btn" onclick="switchTab('single')">
+                <i class="ri-movie-line"></i> <span>Tải Video Lẻ</span>
+            </button>
+            <button class="nav-btn" onclick="switchTab('settings')">
+                <i class="ri-settings-3-line"></i> <span>Cài Đặt</span>
+            </button>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <i class="ri-moon-line" id="themeIcon"></i> <span>Giao diện</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        
+        <!-- TAB 1: BATCH -->
+        <div id="tab-batch" class="tab-pane active">
+            <div class="pane-header">
+                <h2><i class="ri-stack-line"></i> Tải Theo Danh Sách</h2>
+                <p class="subtitle">Nhập danh sách link video để tải hàng loạt với tốc độ cao.</p>
+            </div>
+
+            <div class="glass-card input-section">
+                <div class="row">
+                    <div class="col-lg">
+                        <label>Danh sách liên kết</label>
+                        <div class="textarea-wrapper">
+                            <textarea id="batchInput" class="custom-textarea" oninput="updateBatchCount()" placeholder="Dán link vào đây (Mỗi dòng 1 link)..."></textarea>
+                            <div class="counter-badge"><i class="ri-link"></i> <span id="linkCount">0</span></div>
+                        </div>
+                    </div>
+                    <div class="col-sm settings-col">
+                        <div class="setting-item">
+                            <label><i class="ri-cpu-line"></i> Luồng (Threads)</label>
+                            <input type="number" id="batchThreads" value="3" min="1" max="10">
+                        </div>
+                        <div class="action-buttons">
+                            <button class="btn btn-primary btn-block" onclick="scanBatch()">
+                                <i class="ri-search-2-line"></i> Quét Link
+                            </button>
+                            <button class="btn btn-success btn-block" id="btnBatchDl" style="display:none;" onclick="downloadChecked('batch')">
+                                <i class="ri-download-cloud-2-line"></i> Tải Đã Chọn
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="batchLoader" class="loader-wrapper">
+                <div class="spinner"></div>
+                <span>Đang xử lý...</span>
+            </div>
+
+            <div class="glass-card table-section">
+                <div class="table-responsive">
+                    <table id="batchTable" class="custom-table">
+                        <thead>
+                            <tr>
+                                <th width="50"><input type="checkbox" onchange="toggleAll(this, 'batchTable')"></th>
+                                <th width="100">Preview</th>
+                                <th>Thông tin Video</th>
+                                <th width="150">Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody onmousedown="startDrag(event)" onmouseup="endDrag()" onmouseleave="endDrag()"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: CHANNEL -->
+        <div id="tab-channel" class="tab-pane">
+            <div class="pane-header">
+                <h2><i class="ri-user-search-line"></i> Tải Kênh Người Dùng</h2>
+                <p class="subtitle">Quét và tải toàn bộ video từ kênh Douyin bất kỳ.</p>
+            </div>
+
+            <div class="glass-card control-panel">
+                <div class="row align-end">
+                    <div class="col-grow">
+                        <label>Link Profile User</label>
+                        <div class="input-icon-wrapper">
+                            <i class="ri-link-m"></i>
+                            <input type="text" id="urlUser" placeholder="https://v.douyin.com/...">
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <label>Chế độ</label>
+                        <select id="userMode" onchange="toggleUserMode()">
+                            <option value="limit">Giới hạn</option>
+                            <option value="all">Toàn bộ</option>
+                        </select>
+                    </div>
+                    <div class="col-auto" id="limitGroup">
+                        <label>Số lượng</label>
+                        <input type="number" id="limitUser" value="20" style="width: 80px;">
+                    </div>
+                </div>
+
+                <div class="advanced-filters">
+                    <div class="filter-group">
+                        <label>Từ ngày</label>
+                        <input type="date" id="dateStart">
+                    </div>
+                    <div class="filter-group">
+                        <label>Đến ngày</label>
+                        <input type="date" id="dateEnd">
+                    </div>
+                    <div class="filter-group">
+                        <label>Luồng</label>
+                        <input type="number" id="channelThreads" value="3" style="width: 60px;">
+                    </div>
+                    <div class="filter-actions">
+                        <button class="btn btn-primary" id="btnScanUser" onclick="scanUser()"><i class="ri-search-line"></i> Quét</button>
+                        <button class="btn btn-danger" id="btnStopUser" onclick="stopScan()" style="display:none;"><i class="ri-stop-circle-line"></i> Dừng</button>
+                        <button class="btn btn-outline" onclick="filterByDate()"><i class="ri-filter-3-line"></i> Lọc</button>
+                        <button class="btn btn-info" id="btnCopyLink" style="display:none;" onclick="copyCheckedLinks()"><i class="ri-file-copy-line"></i> Copy</button>
+                        <button class="btn btn-success" id="btnUserDl" style="display:none;" onclick="downloadChecked('channel')"><i class="ri-download-2-line"></i> Tải</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="userStatus" class="status-bar" style="display:none;">
+                <i class="ri-check-double-line"></i> Đã tìm thấy: <b id="userCount">0</b> video
+            </div>
+
+            <div class="glass-card table-section">
+                <div class="table-responsive">
+                    <table id="channelTable" class="custom-table">
+                        <thead>
+                            <tr>
+                                <th width="50"><input type="checkbox" onchange="toggleAll(this, 'channelTable')"></th>
+                                <th width="100">Ảnh</th>
+                                <th width="120">Ngày đăng</th>
+                                <th>Mô tả</th>
+                                <th width="150">ID</th>
+                                <th width="100">Link</th>
+                            </tr>
+                        </thead>
+                        <tbody onmousedown="startDrag(event)" onmouseup="endDrag()" onmouseleave="endDrag()"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: SINGLE -->
+        <div id="tab-single" class="tab-pane">
+            <div class="pane-header">
+                <h2><i class="ri-movie-2-line"></i> Tải Video Lẻ</h2>
+                <p class="subtitle">Tải nhanh một video mà không cần watermark.</p>
+            </div>
+
+            <div class="glass-card single-downloader">
+                <div class="search-box">
+                    <input type="text" id="urlSingle" placeholder="Dán link video vào đây...">
+                    <button class="btn btn-primary btn-lg" onclick="getSingle()">
+                        <i class="ri-download-line"></i> Lấy Video
+                    </button>
+                </div>
+            </div>
+
+            <div id="singleResult" class="result-card" style="display:none;">
+                <div class="result-content">
+                    <div class="result-thumb">
+                        <img id="sThumb" src="">
+                        <div class="play-icon"><i class="ri-play-circle-fill"></i></div>
+                    </div>
+                    <div class="result-info">
+                        <h3 id="sDesc">Tiêu đề video</h3>
+                        <div class="author-info">
+                            <i class="ri-user-smile-line"></i> <span id="sAuthor">Author</span>
+                        </div>
+                        
+                        <!-- Statistics -->
+                        <div class="video-stats" style="display:flex; gap:20px; margin:15px 0; font-size:14px;">
+                            <span style="display:flex; align-items:center; gap:5px;">
+                                <i class="ri-heart-fill" style="color:#fe2c55;"></i>
+                                <strong id="sLikes">0</strong>
+                            </span>
+                            <span style="display:flex; align-items:center; gap:5px;">
+                                <i class="ri-chat-3-fill" style="color:#00d4ff;"></i>
+                                <strong id="sComments">0</strong>
+                            </span>
+                            <span style="display:flex; align-items:center; gap:5px;">
+                                <i class="ri-share-forward-fill" style="color:#ffba00;"></i>
+                                <strong id="sShares">0</strong>
+                            </span>
+                        </div>
+
+                        <div class="result-actions" style="display:flex; gap:10px;">
+                            <a id="btnDlVideo" class="btn btn-primary btn-icon">
+                                <i class="ri-download-fill"></i> Tải Video
+                            </a>
+                            <a id="btnDlMusic" class="btn btn-success btn-icon">
+                                <i class="ri-music-2-fill"></i> Tải MP3
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: SETTINGS -->
+        <div id="tab-settings" class="tab-pane">
+            <div class="pane-header">
+                <h2><i class="ri-settings-3-line"></i> Cài Đặt</h2>
+                <p class="subtitle">Quản lý API Key và cấu hình mặc định.</p>
+            </div>
+
+            <div class="glass-card">
+                <div class="card-header">
+                    <h3><i class="ri-key-2-line"></i> Cấu Hình TikHub API</h3>
+                </div>
+                <div class="input-group" style="margin-top: 15px;">
+                    <label>TikHub API Key</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="password" id="tikhubKey" placeholder="Nhập API Key của bạn..." style="flex:1; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                        <button class="btn btn-primary" onclick="checkTikhubKey()"><i class="ri-check-double-line"></i> Kiểm Tra</button>
+                        <button class="btn btn-success" onclick="saveTikhubKey()"><i class="ri-save-3-line"></i> Lưu Key</button>
+                    </div>
+                    <div id="keyStatus" style="margin-top:10px; font-size:14px;"></div>
+                </div>
+                <div id="userInfoDisplay" style="display:none; margin-top:15px; padding:15px; background:var(--bg); border-radius:8px; border: 1px solid rgba(0,0,0,0.05);">
+                    <p><strong>User:</strong> <span id="uiEmail">...</span></p>
+                    <p><strong>Số dư:</strong> <span id="uiBalance" style="color:var(--primary); font-weight:bold;">...</span></p>
+                    <p><strong>Trạng thái:</strong> <span id="uiStatus">...</span></p>
+                </div>
+            </div>
+
+            <div class="glass-card" style="margin-top:20px;">
+                <div class="card-header">
+                    <h3><i class="ri-equalizer-line"></i> Cài Đặt Mặc Định</h3>
+                </div>
+                <div class="row" style="margin-top: 15px;">
+                    <div class="col-sm">
+                        <label>Số luồng tải (Threads)</label>
+                        <input type="number" id="defThreads" value="3" min="1" max="10" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                    </div>
+                    <div class="col-sm">
+                        <label>Chế độ tải kênh</label>
+                        <select id="defMode" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                            <option value="all">Tải tất cả</option>
+                            <option value="limit">Giới hạn số lượng</option>
+                        </select>
+                    </div>
+                    <div class="col-sm">
+                        <label>Số lượng giới hạn</label>
+                        <input type="number" id="defLimit" value="10" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                    </div>
+                </div>
+                <div class="input-group" style="margin-top:20px;">
+                    <button class="btn btn-primary" onclick="saveDefaultSettings()"><i class="ri-save-line"></i> Lưu Cấu Hình Mặc Định</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>
