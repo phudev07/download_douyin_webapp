@@ -129,7 +129,6 @@ async function scanUser() {
                 document.getElementById('userCount').innerText = userVideos.length;
                 max_cursor = jsonPage.max_cursor;
                 has_more = jsonPage.has_more;
-                if (newVideos.length === 0 && has_more) break;
             } else break;
         }
     } catch(e) { alert(e.message); }
@@ -296,6 +295,11 @@ async function getSingle() {
         // MP3 button - always visible, set href if music exists
         if(d.music_url) {
             document.getElementById('btnDlMusic').href = `/proxy-download?url=${encodeURIComponent(d.music_url)}&name=${d.id}.mp3`;
+        }
+        
+        // Thumbnail button - set href for cover image (tự động chuyển sang PNG)
+        if(d.cover) {
+            document.getElementById('btnDlThumb').href = `/download-thumbnail?url=${encodeURIComponent(d.cover)}&name=${d.id}_thumb.png`;
         }
     }
 }

@@ -4,6 +4,8 @@ import re
 from datetime import datetime
 import os
 from dotenv import load_dotenv
+from PIL import Image
+from io import BytesIO
 
 load_dotenv()
 
@@ -183,6 +185,54 @@ def proxy_download():
         req = requests.get(file_url, headers=headers, stream=True, timeout=20)
         return Response(stream_with_context(req.iter_content(chunk_size=4096)), content_type=req.headers.get('content-type'), headers={"Content-Disposition": f"attachment; filename={file_name}"})
     except: return "Error", 500
+
+@app.route('/download-thumbnail')
+def download_thumbnail():
+    """Tải thumbnail và tự động chuyển sang PNG"""
+    file_url = request.args.get('url')
+    file_name = request.args.get('name', 'thumbnail.png')
+    
+    # Đảm bảo tên file có đuôi .png
+    if not file_name.endswith('.png'):
+        file_name = file_name.rsplit('.', 1)[0] + '.png'
+    
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Referer": "https://www.douyin.com/",
+        "Sec-Fetch-Dest": "image",
+        "Sec-Fetch-Mode": "cors"
+    }
+    
+    try:
+        # Tải ảnh từ URL
+        response = requests.get(file_url, headers=headers, timeout=20)
+        
+        # Mở ảnh bằng PIL
+        img = Image.open(BytesIO(response.content))
+        
+        # Chuyển sang RGB nếu cần (để tránh lỗi với RGBA)
+        if img.mode in ('RGBA', 'LA', 'P'):
+            background = Image.new('RGB', img.size, (255, 255, 255))
+            if img.mode == 'P':
+                img = img.convert('RGBA')
+            background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+            img = background
+        elif img.mode != 'RGB':
+            img = img.convert('RGB')
+        
+        # Lưu vào BytesIO dưới dạng PNG
+        img_io = BytesIO()
+        img.save(img_io, 'PNG', optimize=True)
+        img_io.seek(0)
+        
+        return Response(
+            img_io.getvalue(),
+            mimetype='image/png',
+            headers={"Content-Disposition": f"attachment; filename={file_name}"}
+        )
+    except Exception as e:
+        print(f"Error converting image: {e}")
+        return "Error converting image", 500
 
 @app.route('/api/check-key', methods=['POST'])
 def check_key():
