@@ -329,3 +329,88 @@ input, select {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 10px; }
 [data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
+
+
+
+/* STICKY FILTER ACTIONS AND TABLE HEADER */
+/* Ensure parent containers don't block sticky */
+#tab-channel {
+    overflow: visible;
+}
+
+#tab-channel .glass-card {
+    overflow: visible;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+#tab-channel .filter-actions {
+    position: sticky;
+    top: 0;
+    z-index: 999;
+    background: var(--bg-body);
+    padding: 15px 0;
+    margin: 0 -30px;
+    padding-left: 30px;
+    padding-right: 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+#tab-channel .table-section {
+    margin-bottom: 100px;
+    overflow: visible;
+}
+
+#tab-channel .table-responsive {
+    overflow-x: auto;
+    overflow-y: visible;
+}
+
+#tab-channel .custom-table {
+    overflow: visible;
+}
+
+#tab-channel .custom-table thead {
+    position: sticky;
+    top: 60px;
+    z-index: 998;
+}
+
+#tab-channel .custom-table thead th {
+    background: var(--bg-body);
+    padding-top: 15px;
+    padding-bottom: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Reduce spacing in table for better view */
+#tab-channel .custom-table tbody td {
+    padding: 10px 15px 10px 0;
+}
+
+/* JavaScript-based sticky classes */
+#tab-channel .filter-actions.is-sticky {
+    position: fixed;
+    top: 0;
+    left: 260px;
+    right: 0;
+    z-index: 999;
+    background: var(--bg-body);
+    padding: 15px 40px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: all 0.2s ease;
+}
+
+#tab-channel .custom-table thead.is-sticky {
+    position: fixed;
+    top: 60px;
+    left: 260px;
+    right: 0;
+    z-index: 998;
+    transition: all 0.2s ease;
+}
+
+#tab-channel .custom-table thead.is-sticky th {
+    background: var(--bg-body);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}

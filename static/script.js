@@ -400,5 +400,63 @@ function applySettings(s) {
     if(s.limit) document.getElementById('limitUser').value = s.limit;
 }
 
+
 // Init
 loadSettings();
+
+// --- STICKY HEADER FOR CHANNEL TAB (JavaScript approach) ---
+(function() {
+    const mainContent = document.querySelector('.main-content');
+    if (!mainContent) return;
+    
+    let filterActions = null;
+    let tableHeader = null;
+    let filterActionsOriginalTop = 0;
+    let tableHeaderOriginalTop = 0;
+    
+    function initStickyElements() {
+        filterActions = document.querySelector('#tab-channel .filter-actions');
+        tableHeader = document.querySelector('#tab-channel .custom-table thead');
+        
+        if (filterActions) {
+            filterActionsOriginalTop = filterActions.offsetTop;
+        }
+        if (tableHeader) {
+            tableHeaderOriginalTop = tableHeader.offsetTop;
+        }
+    }
+    
+    function handleScroll() {
+        const scrollTop = mainContent.scrollTop;
+        
+        if (filterActions) {
+            if (scrollTop >= filterActionsOriginalTop) {
+                filterActions.classList.add('is-sticky');
+            } else {
+                filterActions.classList.remove('is-sticky');
+            }
+        }
+        
+        if (tableHeader) {
+            const stickyOffset = filterActions && filterActions.classList.contains('is-sticky') ? 60 : 0;
+            if (scrollTop >= (tableHeaderOriginalTop - stickyOffset)) {
+                tableHeader.classList.add('is-sticky');
+            } else {
+                tableHeader.classList.remove('is-sticky');
+            }
+        }
+    }
+    
+    // Initialize when switching to channel tab
+    const channelTabBtn = document.querySelector('[onclick*="channel"]');
+    if (channelTabBtn) {
+        channelTabBtn.addEventListener('click', function() {
+            setTimeout(initStickyElements, 100);
+        });
+    }
+    
+    mainContent.addEventListener('scroll', handleScroll);
+    
+    // Initialize if already on channel tab
+    setTimeout(initStickyElements, 500);
+})();
