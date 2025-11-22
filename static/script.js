@@ -114,9 +114,15 @@ async function scanUser() {
         let has_more = true;
         const mode = document.getElementById('userMode').value;
         const limit = parseInt(document.getElementById('limitUser').value);
+        
+        console.log(`[Scan] Mode: ${mode}, Limit: ${limit}`);
 
         while(has_more && !stopFlag) {
-            if(mode === 'limit' && userVideos.length >= limit) break;
+            if(mode === 'limit' && userVideos.length >= limit) {
+                console.log(`[Scan] Reached limit: ${userVideos.length}/${limit}`);
+                break;
+            }
+            console.log(`[Scan] Fetching page, cursor: ${max_cursor}`);
             const resPage = await fetch('/fetch-user-page', {
                 method:'POST', headers:{'Content-Type':'application/json'},
                 body:JSON.stringify({sec_user_id: sec_id, max_cursor: max_cursor})
@@ -124,14 +130,22 @@ async function scanUser() {
             const jsonPage = await resPage.json();
             if(jsonPage.success) {
                 const newVideos = jsonPage.data;
+                console.log(`[Scan] Got ${newVideos.length} videos, has_more: ${jsonPage.has_more}`);
                 userVideos = userVideos.concat(newVideos);
                 renderUserRows(newVideos);
                 document.getElementById('userCount').innerText = userVideos.length;
                 max_cursor = jsonPage.max_cursor;
                 has_more = jsonPage.has_more;
-            } else break;
+            } else {
+                console.error('[Scan] API returned error:', jsonPage);
+                break;
+            }
         }
-    } catch(e) { alert(e.message); }
+        console.log(`[Scan] Finished. Total: ${userVideos.length} videos`);
+    } catch(e) { 
+        console.error('[Scan] Error:', e);
+        alert(e.message); 
+    }
     finally { resetUserUI(false); }
 }
 
@@ -143,13 +157,15 @@ function resetUserUI(isStart) {
         document.getElementById('btnStopUser').style.display = 'inline-flex';
         document.getElementById('userStatus').style.display = 'block';
         document.getElementById('btnUserDl').style.display = 'none';
-        document.getElementById('btnCopyLink').style.display = 'none'; // Ẩn
+        document.getElementById('btnCopyLink').style.display = 'none';
+        document.getElementById('btnChannelThumb').style.display = 'none';
     } else {
         document.getElementById('btnScanUser').style.display = 'inline-flex';
         document.getElementById('btnStopUser').style.display = 'none';
         if(userVideos.length > 0) {
             document.getElementById('btnUserDl').style.display = 'inline-flex';
-            document.getElementById('btnCopyLink').style.display = 'inline-flex'; // Hiện
+            document.getElementById('btnCopyLink').style.display = 'inline-flex';
+            document.getElementById('btnChannelThumb').style.display = 'inline-flex';
         }
     }
 }
@@ -241,6 +257,37 @@ function downloadChecked(type) {
             const link = `/proxy-download?url=${encodeURIComponent(item.video_url)}&name=${name}`;
             const iframe = document.createElement('iframe'); iframe.style.display='none'; iframe.src=link; document.body.appendChild(iframe);
             setTimeout(() => { document.body.removeChild(iframe); active--; process(); }, 1500);
+        }
+    }
+    process();
+}
+
+// --- DOWNLOAD CHANNEL THUMBNAILS ---
+function downloadChannelThumbnails() {
+    const checkboxes = document.querySelectorAll('#channelTable tbody tr:not([style*="display: none"]) input:checked');
+    if(!checkboxes.length) return alert("Đã chọn video nào!");
+    if(!confirm(`Tải ${checkboxes.length} thumbnail?`)) return;
+    
+    const queue = Array.from(checkboxes).map(cb => userVideos[cb.value]);
+    let active = 0;
+    const threads = parseInt(document.getElementById('channelThreads').value) || 3;
+    
+    function process() {
+        while(active < threads && queue.length > 0) {
+            const item = queue.shift();
+            if(!item.cover) { console.log("No cover"); continue; }
+            active++;
+            const name = `${item.id}_thumb.png`;
+            const link = `/download-thumbnail?url=${encodeURIComponent(item.cover)}&name=${name}`;
+            const iframe = document.createElement('iframe'); 
+            iframe.style.display='none'; 
+            iframe.src=link; 
+            document.body.appendChild(iframe);
+            setTimeout(() => { 
+                document.body.removeChild(iframe); 
+                active--; 
+                process(); 
+            }, 1500);
         }
     }
     process();
